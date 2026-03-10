@@ -556,7 +556,6 @@
                         <i class="fa fa-calendar-check-o"></i> Informasi Publik
                     </span>
                     <h1>Kalender Cuti Dokter</h1>
-                    <p>Status cuti dokter dapat dilihat langsung tanpa login. Login hanya digunakan untuk memperbarui data dan pengajuan.</p>
                 </div>
 
                 <div class="screen-actions">
