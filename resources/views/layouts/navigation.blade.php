@@ -1,3 +1,10 @@
+<style>
+    .profile-img{
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+    }
+</style>
 <nav class="navbar-default navbar-static-side" role="navigation">
     <div class="sidebar-collapse">
         <ul class="nav metismenu" id="side-menu">
@@ -48,9 +55,13 @@
                 <li class="nav-header">
                     <div class="dropdown profile-element">
                         @if($hasFoto)
-                            <img alt="image" class="rounded-circle" src="{{ asset('uploads/foto/'.$userFoto) }}?t={{ time() }}"/>
+                            <img alt="image"
+                                class="rounded-circle profile-img"
+                                src="{{ asset('uploads/foto/'.$userFoto) }}?t={{ time() }}"/>
                         @else
-                            <img alt="image" class="rounded-circle" src="{{ asset('user.png') }}"/>
+                            <img alt="image"
+                                class="rounded-circle profile-img"
+                                src="{{ asset('user.png') }}"/>
                         @endif
                         <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                             <span class="block m-t-xs font-bold">{{ $displayName }}</span>
@@ -237,97 +248,3 @@
 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
     @csrf
 </form>
-
-<!-- MetisMenu JS -->
-<script src="{{ asset('js/plugins/metisMenu/jquery.metisMenu.js') }}"></script>
-<script>
-$(document).ready(function() {
-    // Initialize metisMenu
-    $('#side-menu').metisMenu();
-    
-    // Search functionality
-    const searchInput = document.getElementById('menuSearch');
-    const searchResultCount = document.getElementById('searchResultCount');
-    
-    if (searchInput) {
-        let searchTimeout;
-        
-        searchInput.addEventListener('keyup', function() {
-            clearTimeout(searchTimeout);
-            
-            searchTimeout = setTimeout(() => {
-                const keyword = this.value.toLowerCase().trim();
-                const menuItems = document.querySelectorAll('#side-menu > li:not(.nav-header):not(.search-bar)');
-                let visibleCount = 0;
-
-                menuItems.forEach(item => {
-                    const menuText = item.innerText.toLowerCase();
-                    
-                    if (keyword === '') {
-                        item.style.display = '';
-                        visibleCount++;
-                        
-                        // Reset submenu visibility
-                        const submenu = item.querySelector('.nav-second-level');
-                        if (submenu) {
-                            submenu.style.display = 'none';
-                            submenu.classList.remove('in');
-                        }
-                    } else {
-                        if (menuText.includes(keyword)) {
-                            item.style.display = '';
-                            visibleCount++;
-                            
-                            // Auto open submenu
-                            const submenu = item.querySelector('.nav-second-level');
-                            if (submenu) {
-                                submenu.style.display = 'block';
-                                submenu.classList.add('in');
-                            }
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    }
-                });
-
-                if (searchResultCount) {
-                    if (keyword === '') {
-                        searchResultCount.innerText = '';
-                    } else {
-                        searchResultCount.innerText = visibleCount > 0 ? visibleCount + ' menu ditemukan' : 'Tidak ada';
-                    }
-                }
-            }, 100);
-        });
-    }
-    
-    // Handle arrow rotation
-    $('#side-menu li a').on('click', function(e) {
-        if ($(this).find('.fa.arrow').length > 0) {
-            const arrow = $(this).find('.fa.arrow');
-            const parent = $(this).parent();
-            const submenu = parent.find('.nav-second-level');
-            
-            if (submenu.length > 0 && !$(this).attr('data-toggle')) {
-                e.preventDefault();
-                
-                if (submenu.hasClass('in')) {
-                    submenu.removeClass('in');
-                    submenu.css('display', 'none');
-                    arrow.css('transform', 'rotate(0deg)');
-                } else {
-                    submenu.addClass('in');
-                    submenu.css('display', 'block');
-                    arrow.css('transform', 'rotate(90deg)');
-                }
-            }
-        }
-    });
-});
-
-// Handle logout
-function logout(event) {
-    event.preventDefault();
-    document.getElementById('logout-form').submit();
-}
-</script>

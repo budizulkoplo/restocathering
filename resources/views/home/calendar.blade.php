@@ -51,7 +51,7 @@
                                 </p>
                             </div>
                             <div class="col-md-4 text-right">
-                                <a href="{{ route('cuti.dashboard') }}" class="btn btn-white">
+                                <a href="{{ route('cuti.dashboard') }}" class="btn btn-danger">
                                     <i class="fa fa-bar-chart"></i> Kembali ke Dashboard
                                 </a>
                             </div>
@@ -126,7 +126,7 @@
                                     @empty
                                         <tr>
                                             <td colspan="2" class="text-center text-muted">
-                                                Data dokter belum tersedia dari API maupun tabel cuti.
+                                                Data dokter belum tersedia dari tabel dokter.
                                             </td>
                                         </tr>
                                     @endforelse
@@ -138,11 +138,11 @@
             </div>
         </div>
 
-        <div class="modal fade" id="cutiModal" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+        <div class="cuti-modal-overlay" id="cutiModal">
+            <div class="cuti-modal-dialog">
+                <div class="cuti-modal-content">
                     <div class="modal-header modal-header-cuti">
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close cuti-modal-close" id="closeCutiModal">&times;</button>
                         <h4 class="modal-title">
                             <i class="fa fa-calendar-check-o"></i> Atur Cuti Dokter
                         </h4>
@@ -170,7 +170,7 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-white" data-dismiss="modal">Batal</button>
+                            <button type="button" class="btn btn-white" id="cancelCutiModal">Batal</button>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa fa-save"></i> Simpan Perubahan
                             </button>
@@ -216,7 +216,7 @@
         }
 
         .calendar-day {
-            min-height: 110px;
+            min-height: 150px;
             border: 1px solid #e7eaec;
             padding: 10px;
             position: relative;
@@ -267,9 +267,31 @@
             gap: 6px;
         }
 
-        .calendar-status-bar {
-            height: 6px;
+        .calendar-detail-item {
+            background: #f8fafb;
+            border-left: 3px solid #1c84c6;
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+
+        .calendar-detail-name {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.25;
+            color: #2f4050;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .calendar-detail-status {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 10px;
+            padding: 2px 6px;
             border-radius: 10px;
+            color: #fff;
         }
 
         .doctor-table-wrap {
@@ -280,6 +302,43 @@
         .modal-header-cuti {
             background: linear-gradient(135deg, #1c84c6, #23c6c8);
             color: #fff;
+        }
+
+        .cuti-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(43, 53, 66, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 24px;
+        }
+
+        .cuti-modal-overlay.active {
+            display: flex;
+        }
+
+        .cuti-modal-dialog {
+            width: min(1100px, 100%);
+            max-height: calc(100vh - 48px);
+        }
+
+        .cuti-modal-content {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .cuti-modal-content .modal-body {
+            max-height: calc(100vh - 190px);
+            overflow: auto;
+        }
+
+        .cuti-modal-close {
+            color: #fff;
+            opacity: 1;
         }
 
         .selected-date {
@@ -354,7 +413,7 @@
             }
 
             .calendar-day {
-                min-height: 90px;
+                min-height: 120px;
             }
         }
     </style>
@@ -371,11 +430,12 @@
 
         const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
         const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const cutiModal = document.getElementById('cutiModal');
         const statusBarClass = {
-            'Pengajuan': 'bg-warning',
-            'Tutup Hfis': 'bg-danger',
-            'Buka Hfis': 'bg-success',
-            'Selesai': 'bg-primary',
+            'Pengajuan': 'label-warning',
+            'Tutup Hfis': 'label-danger',
+            'Buka Hfis': 'label-success',
+            'Selesai': 'label-primary',
         };
 
         function escapeHtml(value) {
@@ -417,12 +477,13 @@
                 if (items.length) {
                     html += `<span class="calendar-day-count">${items.length}</span>`;
                     html += '<div class="calendar-status-list">';
-
-                    ['Pengajuan', 'Tutup Hfis', 'Buka Hfis', 'Selesai'].forEach((status) => {
-                        const total = items.filter((item) => item.status === status).length;
-                        if (total > 0) {
-                            html += `<div class="calendar-status-bar ${statusBarClass[status]}" title="${status}: ${total} dokter"></div>`;
-                        }
+                    items.forEach((item) => {
+                        html += `
+                            <div class="calendar-detail-item">
+                                <span class="calendar-detail-name" title="${escapeHtml(item.pegawai_nama)}">${escapeHtml(item.pegawai_nama)}</span>
+                                <span class="calendar-detail-status label ${statusBarClass[item.status] || 'label-default'}">${escapeHtml(item.status)}</span>
+                            </div>
+                        `;
                     });
 
                     html += '</div>';
@@ -564,7 +625,13 @@
 
             renderDoctorPicker();
             renderSelectedDoctors();
-            $('#cutiModal').modal('show');
+            cutiModal.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeCutiModal() {
+            cutiModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
         }
 
         document.getElementById('doctorSearch').addEventListener('input', function filterDoctorTable() {
@@ -576,6 +643,20 @@
 
         document.getElementById('modalDoctorSearch').addEventListener('input', function filterModalDoctors() {
             renderDoctorPicker(this.value);
+        });
+
+        document.getElementById('closeCutiModal').addEventListener('click', closeCutiModal);
+        document.getElementById('cancelCutiModal').addEventListener('click', closeCutiModal);
+        cutiModal.addEventListener('click', function (event) {
+            if (event.target === cutiModal) {
+                closeCutiModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && cutiModal.classList.contains('active')) {
+                closeCutiModal();
+            }
         });
 
         renderCalendar();

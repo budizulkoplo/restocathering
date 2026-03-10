@@ -8,16 +8,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class CutiDokterController extends Controller
 {
-    private const DOKTER_API_URL = 'https://mobile.rspkuboja.com/api/pegawai';
-    private const DOKTER_API_KEY = 'RSPKU-PEGAWAI-2026-JOSJIS';
-
     public function dashboard(): View
     {
         $now = now()->locale('id');
@@ -167,36 +162,31 @@ class CutiDokterController extends Controller
 
     private function getDoctors(): Collection
     {
-        try {
-            $response = Http::timeout(20)
-                ->withoutVerifying()
-                ->get(self::DOKTER_API_URL, [
-                    'api_key' => self::DOKTER_API_KEY,
-                ]);
-
-            if ($response->successful()) {
-                return collect($response->json())
-                    ->filter(function (array $pegawai) {
-                        $nama = strtolower((string) ($pegawai['pegawai_nama'] ?? ''));
-                        $jabatan = strtolower((string) ($pegawai['jabatan'] ?? ''));
-
-                        return str_starts_with($nama, 'dr.') || str_contains($jabatan, 'dokter');
-                    })
-                    ->map(function (array $pegawai) {
-                        return [
-                            'pegawai_id' => (string) ($pegawai['pegawai_id'] ?? ''),
-                            'pegawai_nama' => (string) ($pegawai['pegawai_nama'] ?? 'Tanpa Nama'),
-                            'jabatan' => (string) ($pegawai['jabatan'] ?? 'Dokter'),
-                        ];
-                    })
-                    ->filter(fn (array $pegawai) => $pegawai['pegawai_id'] !== '')
-                    ->sortBy('pegawai_nama')
-                    ->values();
-            }
-        } catch (\Throwable $exception) {
-            Log::warning('Gagal mengambil data dokter dari API.', [
-                'message' => $exception->getMessage(),
-            ]);
+        if (Schema::hasTable('dokter')) {
+            return DB::table('dokter')
+                ->select([
+                    'id',
+                    'nama_lengkap',
+                    'jabatan',
+                    'nik',
+                    'no_hp',
+                    'foto',
+                    'kode_dept',
+                ])
+                ->orderBy('nama_lengkap')
+                ->get()
+                ->map(function (object $dokter) {
+                    return [
+                        'pegawai_id' => (string) $dokter->id,
+                        'pegawai_nama' => (string) $dokter->nama_lengkap,
+                        'jabatan' => (string) ($dokter->jabatan ?? ''),
+                        'nik' => (string) ($dokter->nik ?? ''),
+                        'no_hp' => (string) ($dokter->no_hp ?? ''),
+                        'foto' => (string) ($dokter->foto ?? ''),
+                        'kode_dept' => (string) ($dokter->kode_dept ?? ''),
+                    ];
+                })
+                ->values();
         }
 
         if (! Schema::hasTable('cuti')) {
