@@ -378,6 +378,15 @@
             'Selesai': 'bg-primary',
         };
 
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         function renderCalendar() {
             const calendarGrid = document.getElementById('calendarGrid');
             const firstDay = new Date(currentYear, currentMonth - 1, 1);
@@ -442,13 +451,16 @@
 
             container.innerHTML = filtered.map((doctor) => {
                 const isSelected = selectedIds.includes(String(doctor.pegawai_id));
+                const doctorId = escapeHtml(doctor.pegawai_id);
+                const doctorName = escapeHtml(doctor.pegawai_nama);
+                const doctorPosition = escapeHtml(doctor.jabatan);
 
                 return `
                     <div class="doctor-option ${isSelected ? 'disabled' : ''}">
                         <div class="doctor-option-header">
                             <div>
-                                <div class="doctor-name">${doctor.pegawai_nama}</div>
-                                <div class="doctor-position">${doctor.jabatan}</div>
+                                <div class="doctor-name">${doctorName}</div>
+                                <div class="doctor-position">${doctorPosition}</div>
                             </div>
                             <button
                                 type="button"
@@ -478,8 +490,8 @@
                         <div class="selected-doctor-item">
                             <div class="selected-doctor-header">
                                 <div>
-                                    <div class="doctor-name">${doctor.nama}</div>
-                                    <div class="doctor-position">${doctor.jabatan}</div>
+                                    <div class="doctor-name">${escapeHtml(doctor.nama)}</div>
+                                    <div class="doctor-position">${escapeHtml(doctor.jabatan)}</div>
                                 </div>
                                 <button type="button" class="btn btn-xs btn-danger" onclick="removeDoctor('${doctor.id}')">
                                     <i class="fa fa-times"></i>
@@ -493,9 +505,9 @@
                                     <option value="Selesai" ${doctor.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
                                 </select>
                             </div>
-                            <input type="hidden" name="dokter_dipilih[]" value="${doctor.id}_${doctor.status}">
-                            <input type="hidden" name="pegawai_nama_${doctor.id}" value="${doctor.nama}">
-                            <input type="hidden" name="jabatan_${doctor.id}" value="${doctor.jabatan}">
+                            <input type="hidden" name="dokter_dipilih[]" value="${escapeHtml(doctor.id)}_${escapeHtml(doctor.status)}">
+                            <input type="hidden" name="pegawai_nama_${escapeHtml(doctor.id)}" value="${escapeHtml(doctor.nama)}">
+                            <input type="hidden" name="jabatan_${escapeHtml(doctor.id)}" value="${escapeHtml(doctor.jabatan)}">
                         </div>
                     `).join('')}
                 </div>
