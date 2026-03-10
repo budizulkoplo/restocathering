@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CutiDokterController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 
@@ -16,7 +17,10 @@ PROTECTED
 */
 Route::middleware(['checklogin'])->group(function () {
 
-    Route::get('/', [HomeController::class, 'index'])->name("main");
+    Route::get('/', [CutiDokterController::class, 'dashboard'])->name('main');
+    Route::get('/dashboard', [CutiDokterController::class, 'dashboard'])->name('cuti.dashboard');
+    Route::get('/kalender-cuti', [CutiDokterController::class, 'calendar'])->name('cuti.calendar');
+    Route::post('/kalender-cuti', [CutiDokterController::class, 'store'])->name('cuti.calendar.store');
 
     Route::get('/minor', [HomeController::class, 'minor'])->name("minor");
 

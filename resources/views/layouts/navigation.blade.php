@@ -84,7 +84,35 @@
                 @php
                     $currentUserLevel = $userLevel;
                     $menuCount = 0;
+                    $staticMenus = [
+                        [
+                            'label' => 'Dashboard',
+                            'route' => 'cuti.dashboard',
+                            'icon' => 'fa-th-large',
+                        ],
+                        [
+                            'label' => 'Kalender Cuti',
+                            'route' => 'cuti.calendar',
+                            'icon' => 'fa-calendar',
+                        ],
+                    ];
                 @endphp
+
+                @foreach ($staticMenus as $staticMenu)
+                    @php
+                        $hasRoute = Route::has($staticMenu['route']);
+                        $isStaticActive = $hasRoute && request()->routeIs($staticMenu['route']);
+                    @endphp
+                    @if($hasRoute)
+                        @php $menuCount++; @endphp
+                        <li class="{{ $isStaticActive ? 'active' : '' }}">
+                            <a href="{{ route($staticMenu['route']) }}">
+                                <i class="fa {{ $staticMenu['icon'] }}"></i>
+                                <span class="nav-label">{{ $staticMenu['label'] }}</span>
+                            </a>
+                        </li>
+                    @endif
+                @endforeach
 
                 @foreach ($menus as $item)
                     @php
