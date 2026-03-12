@@ -4,36 +4,22 @@
 
 @php
     $months = [
-        1 => 'Januari',
-        2 => 'Februari',
-        3 => 'Maret',
-        4 => 'April',
-        5 => 'Mei',
-        6 => 'Juni',
-        7 => 'Juli',
-        8 => 'Agustus',
-        9 => 'September',
-        10 => 'Oktober',
-        11 => 'November',
-        12 => 'Desember',
+        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
     ];
 @endphp
 
 @section('content')
-    <div class="wrapper wrapper-content animated fadeInRight cuti-page">
+    <div class="wrapper wrapper-content animated fadeInRight catering-page">
         <div class="row">
             <div class="col-lg-12">
                 @if (session('success'))
-                    <div class="alert alert-success alert-dismissible">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                        {{ session('success') }}
-                    </div>
+                    <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
-
-                @if (session('error'))
-                    <div class="alert alert-danger alert-dismissible">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                        {{ session('error') }}
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        {{ $errors->first() }}
                     </div>
                 @endif
             </div>
@@ -46,12 +32,10 @@
                         <div class="row">
                             <div class="col-md-8">
                                 <h2 class="m-b-xs">{{ $pageTitle }}</h2>
-                                <p class="m-b-none">
-                                    Klik tanggal pada kalender untuk memilih dokter dari tabel dan mengatur status cuti.
-                                </p>
+                                <p class="m-b-none">Klik tanggal untuk input reservasi catering, pilih customer, tentukan menu, DP/lunas, lalu simpan nota reservasi.</p>
                             </div>
                             <div class="col-md-4 text-right">
-                                <a href="{{ route('cuti.dashboard') }}" class="btn btn-danger">
+                                <a href="{{ route('dashboard') }}" class="btn btn-danger">
                                     <i class="fa fa-bar-chart"></i> Kembali ke Dashboard
                                 </a>
                             </div>
@@ -65,18 +49,18 @@
             <div class="col-lg-8">
                 <div class="ibox">
                     <div class="ibox-title">
-                        <h5>Kalender Cuti {{ $monthName }}</h5>
+                        <h5>Kalender Reservasi {{ $monthName }}</h5>
                         <div class="ibox-tools">
                             <form method="GET" class="form-inline">
                                 <div class="form-group m-r-sm">
-                                    <select name="month" class="form-control" onchange="this.form.submit()">
+                                    <select name="month" class="form-control js-select2" onchange="this.form.submit()">
                                         @foreach ($months as $number => $label)
                                             <option value="{{ $number }}" @selected($selectedMonth === $number)>{{ $label }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <select name="year" class="form-control" onchange="this.form.submit()">
+                                    <select name="year" class="form-control js-select2" onchange="this.form.submit()">
                                         @for ($year = now()->year - 2; $year <= now()->year + 2; $year++)
                                             <option value="{{ $year }}" @selected($selectedYear === $year)>{{ $year }}</option>
                                         @endfor
@@ -87,10 +71,10 @@
                     </div>
                     <div class="ibox-content">
                         <div class="calendar-legend">
-                            <span><i class="fa fa-square text-warning"></i> Pengajuan</span>
-                            <span><i class="fa fa-square text-danger"></i> Tutup Hfis</span>
-                            <span><i class="fa fa-square text-success"></i> Buka Hfis</span>
-                            <span><i class="fa fa-square text-primary"></i> Selesai</span>
+                            <span><i class="fa fa-square text-info"></i> Reserved</span>
+                            <span><i class="fa fa-square text-primary"></i> Confirmed</span>
+                            <span><i class="fa fa-square text-success"></i> Completed</span>
+                            <span><i class="fa fa-square text-danger"></i> Cancelled</span>
                         </div>
                         <div id="calendarGrid" class="calendar-grid"></div>
                     </div>
@@ -100,34 +84,32 @@
             <div class="col-lg-4">
                 <div class="ibox">
                     <div class="ibox-title">
-                        <h5>Tabel Dokter</h5>
+                        <h5>Master Customer</h5>
                     </div>
                     <div class="ibox-content">
                         <div class="input-group m-b-sm">
-                            <input type="text" id="doctorSearch" class="form-control" placeholder="Cari dokter...">
+                            <input type="text" id="customerSearch" class="form-control" placeholder="Cari customer...">
                             <span class="input-group-btn">
                                 <button class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
                             </span>
                         </div>
-                        <div class="table-responsive doctor-table-wrap">
-                            <table class="table table-hover table-bordered" id="doctorTable">
+                        <div class="table-responsive customer-table-wrap">
+                            <table class="table table-hover table-bordered" id="customerTable">
                                 <thead>
                                     <tr>
-                                        <th>Nama Dokter</th>
-                                        <th>Jabatan</th>
+                                        <th>Customer</th>
+                                        <th>Telepon</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($doctors as $doctor)
+                                    @forelse ($customers as $customer)
                                         <tr>
-                                            <td>{{ $doctor['pegawai_nama'] }}</td>
-                                            <td>{{ $doctor['jabatan'] }}</td>
+                                            <td>{{ $customer->name }}</td>
+                                            <td>{{ $customer->phone ?: '-' }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="2" class="text-center text-muted">
-                                                Data dokter belum tersedia dari tabel dokter.
-                                            </td>
+                                            <td colspan="2" class="text-center text-muted">Belum ada customer.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -138,41 +120,117 @@
             </div>
         </div>
 
-        <div class="cuti-modal-overlay" id="cutiModal">
+        <div class="cuti-modal-overlay" id="reservationModal">
             <div class="cuti-modal-dialog">
                 <div class="cuti-modal-content">
                     <div class="modal-header modal-header-cuti">
-                        <button type="button" class="close cuti-modal-close" id="closeCutiModal">&times;</button>
+                        <button type="button" class="close cuti-modal-close" id="closeReservationModal">&times;</button>
                         <h4 class="modal-title">
-                            <i class="fa fa-calendar-check-o"></i> Atur Cuti Dokter
+                            <i class="fa fa-calendar-plus-o"></i> Reservasi Catering
                         </h4>
                     </div>
-                    <form method="POST" action="{{ route('cuti.calendar.store') }}" id="cutiForm">
+                    <form method="POST" action="{{ route('catering.calendar.store') }}" id="reservationForm" target="_blank" data-create-action="{{ route('catering.calendar.store') }}" data-update-template="{{ url('/kalender-catering') }}">
                         @csrf
                         <div class="modal-body">
-                            <input type="hidden" name="tanggal" id="tanggalStatus">
+                            <input type="hidden" name="event_date" id="eventDate">
                             <div class="selected-date" id="modalDateLabel"></div>
                             <div class="row">
-                                <div class="col-md-6">
-                                    <h4 class="section-heading">Pilih Dokter</h4>
-                                    <div class="input-group m-b-sm">
-                                        <input type="text" id="modalDoctorSearch" class="form-control" placeholder="Cari dokter di modal...">
-                                        <span class="input-group-btn">
-                                            <button class="btn btn-default" type="button"><i class="fa fa-search"></i></button>
-                                        </span>
+                                <div class="col-md-5">
+                                    <h4 class="section-heading">Data Customer</h4>
+                                    <div class="form-group">
+                                        <label>Pilih Customer</label>
+                                        <select class="form-control js-select2" name="customer_id" id="customerId">
+                                            <option value="">Input customer baru</option>
+                                            @foreach ($customers as $customer)
+                                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-phone="{{ $customer->phone }}" data-address="{{ $customer->address }}">{{ $customer->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                    <div class="doctor-picker" id="doctorPicker"></div>
+                                    <div class="form-group">
+                                        <label>Nama Customer</label>
+                                        <input type="text" class="form-control" name="customer_name" id="customerName">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Telepon</label>
+                                        <input type="text" class="form-control" name="customer_phone" id="customerPhone">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Alamat</label>
+                                        <textarea class="form-control" name="customer_address" id="customerAddress" rows="3"></textarea>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>Jumlah Tamu</label>
+                                                <input type="number" class="form-control" name="guest_count" value="0" min="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>DP</label>
+                                                <input type="number" class="form-control" name="down_payment" value="0" min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>Status</label>
+                                                <select class="form-control" name="status">
+                                                    <option value="reserved">Reserved</option>
+                                                    <option value="confirmed">Confirmed</option>
+                                                    <option value="completed">Completed</option>
+                                                    <option value="cancelled">Cancelled</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>Pembayaran</label>
+                                                <select class="form-control" name="payment_status">
+                                                    <option value="unpaid">Belum Dibayar</option>
+                                                    <option value="dp">DP</option>
+                                                    <option value="paid">Lunas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Diskon</label>
+                                        <input type="number" class="form-control" name="discount" value="0" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Uang Diterima</label>
+                                        <input type="number" class="form-control" name="cash_received" id="cashReceived" value="0" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Catatan</label>
+                                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <h4 class="section-heading">Dokter Dipilih</h4>
-                                    <div id="selectedDoctors"></div>
+                                <div class="col-md-7">
+                                    <div class="flex-head">
+                                        <h4 class="section-heading">Menu Catering</h4>
+                                        <button type="button" class="btn btn-primary btn-sm" id="addItemRow">
+                                            <i class="fa fa-plus"></i> Tambah Menu
+                                        </button>
+                                    </div>
+                                    <div id="itemRows"></div>
+                                    <div class="order-summary">
+                                        <div class="summary-row"><span>Subtotal</span><strong id="subtotalPreview">Rp 0</strong></div>
+                                        <div class="summary-row"><span>Total Bayar</span><strong id="grandTotalPreview">Rp 0</strong></div>
+                                        <div class="summary-row"><span>Kembalian</span><strong id="changePreview">Rp 0</strong></div>
+                                    </div>
+                                    <hr>
+                                    <h4 class="section-heading">Reservasi Pada Tanggal Ini</h4>
+                                    <div id="dailyOrders"></div>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-white" id="cancelCutiModal">Batal</button>
+                            <button type="button" class="btn btn-white" id="cancelReservationModal">Batal</button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-save"></i> Simpan Perubahan
+                                <i class="fa fa-save"></i> <span id="reservationSubmitLabel">Simpan Reservasi</span>
                             </button>
                         </div>
                     </form>
@@ -185,266 +243,58 @@
 @section('scripts')
     @parent
     <style>
-        .cuti-page .page-banner {
-            background: linear-gradient(135deg, #1ab394, #1c84c6);
-            color: #fff;
-        }
-
-        .calendar-legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .calendar-weekday,
-        .calendar-day {
-            border-radius: 8px;
-        }
-
-        .calendar-weekday {
-            background: #f3f3f4;
-            font-weight: 700;
-            text-align: center;
-            padding: 10px 5px;
-        }
-
-        .calendar-day {
-            min-height: 150px;
-            border: 1px solid #e7eaec;
-            padding: 10px;
-            position: relative;
-            cursor: pointer;
-            transition: 0.2s ease;
-            background: #fff;
-        }
-
-        .calendar-day:hover {
-            border-color: #1c84c6;
-            box-shadow: 0 10px 20px rgba(28, 132, 198, 0.12);
-            transform: translateY(-2px);
-        }
-
-        .calendar-day.empty {
-            background: #f8f8f8;
-            cursor: default;
-        }
-
-        .calendar-day.today {
-            border: 2px solid #1ab394;
-        }
-
-        .calendar-day-number {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .calendar-day-count {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #1c84c6;
-            color: #fff;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-
-        .calendar-status-list {
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .calendar-detail-item {
-            background: #f8fafb;
-            border-left: 3px solid #1c84c6;
-            border-radius: 6px;
-            padding: 6px 8px;
-        }
-
-        .calendar-detail-name {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            line-height: 1.25;
-            color: #2f4050;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .calendar-detail-status {
-            display: inline-block;
-            margin-top: 4px;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            color: #fff;
-        }
-
-        .doctor-table-wrap {
-            max-height: 540px;
-            overflow: auto;
-        }
-
-        .modal-header-cuti {
-            background: linear-gradient(135deg, #1c84c6, #23c6c8);
-            color: #fff;
-        }
-
-        .cuti-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(43, 53, 66, 0.55);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            padding: 24px;
-        }
-
-        .cuti-modal-overlay.active {
-            display: flex;
-        }
-
-        .cuti-modal-dialog {
-            width: min(1100px, 100%);
-            max-height: calc(100vh - 48px);
-        }
-
-        .cuti-modal-content {
-            background: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
-        }
-
-        .cuti-modal-content .modal-body {
-            max-height: calc(100vh - 190px);
-            overflow: auto;
-        }
-
-        .cuti-modal-close {
-            color: #fff;
-            opacity: 1;
-        }
-
-        .selected-date {
-            background: #f3f7fb;
-            border-left: 4px solid #1c84c6;
-            padding: 12px 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            font-weight: 700;
-        }
-
-        .section-heading {
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        .doctor-picker,
-        .selected-doctor-list {
-            max-height: 360px;
-            overflow: auto;
-        }
-
-        .doctor-option,
-        .selected-doctor-item {
-            border: 1px solid #e7eaec;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 10px;
-            background: #fff;
-        }
-
-        .doctor-option.disabled {
-            opacity: 0.45;
-            pointer-events: none;
-        }
-
-        .doctor-option-header,
-        .selected-doctor-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .doctor-name {
-            font-weight: 700;
-        }
-
-        .doctor-position {
-            color: #676a6c;
-            font-size: 12px;
-        }
-
-        .selected-doctor-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .empty-state {
-            border: 1px dashed #d2d2d2;
-            border-radius: 6px;
-            padding: 20px;
-            text-align: center;
-            color: #676a6c;
-            background: #fafafa;
-        }
-
-        @media (max-width: 991px) {
-            .calendar-grid {
-                gap: 8px;
-            }
-
-            .calendar-day {
-                min-height: 120px;
-            }
-        }
+        .catering-page .page-banner { background: linear-gradient(135deg, #0f766e, #2563eb); color: #fff; }
+        .calendar-legend, .flex-head, .summary-row { display: flex; align-items: center; justify-content: space-between; }
+        .calendar-legend { flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+        .calendar-weekday, .calendar-day { border-radius: 8px; }
+        .calendar-weekday { background: #f3f3f4; font-weight: 700; text-align: center; padding: 10px 5px; }
+        .calendar-day { min-height: 155px; border: 1px solid #e7eaec; padding: 10px; cursor: pointer; background: #fff; }
+        .calendar-day.empty { background: #f8f8f8; cursor: default; }
+        .calendar-day:hover { border-color: #2563eb; box-shadow: 0 10px 20px rgba(37, 99, 235, .12); }
+        .calendar-day.today { border: 2px solid #0f766e; }
+        .calendar-day-number { font-size: 18px; font-weight: 700; }
+        .calendar-day-count { float: right; background: #2563eb; color: #fff; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+        .calendar-status-list { margin-top: 15px; display: flex; flex-direction: column; gap: 6px; }
+        .calendar-detail-item { background: #f8fafb; border-left: 3px solid #2563eb; border-radius: 6px; padding: 6px 8px; }
+        .calendar-detail-name { display: block; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .calendar-detail-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+        .customer-table-wrap, .selected-doctor-list { max-height: 540px; overflow: auto; }
+        .modal-header-cuti { background: linear-gradient(135deg, #2563eb, #0f766e); color: #fff; }
+        .cuti-modal-overlay { position: fixed; inset: 0; background: rgba(43, 53, 66, .55); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 24px; }
+        .cuti-modal-overlay.active { display: flex; }
+        .cuti-modal-dialog { width: min(1200px, 100%); max-height: calc(100vh - 48px); }
+        .cuti-modal-content { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, .18); }
+        .cuti-modal-content .modal-body { max-height: calc(100vh - 190px); overflow: auto; }
+        .cuti-modal-close { color: #fff; opacity: 1; }
+        .selected-date { background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 15px; margin-bottom: 20px; border-radius: 4px; font-weight: 700; }
+        .section-heading { margin-top: 0; margin-bottom: 15px; }
+        .item-row, .existing-order, .empty-state { border: 1px solid #e7eaec; border-radius: 6px; padding: 12px; margin-bottom: 10px; background: #fff; }
+        .item-row-grid { display: grid; grid-template-columns: 1.8fr .8fr auto; gap: 10px; align-items: end; }
+        .order-summary { background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-top: 15px; }
+        @media (max-width: 991px) { .calendar-day { min-height: 120px; } .item-row-grid { grid-template-columns: 1fr; } }
     </style>
 
     <script>
         const calendarData = @json($calendarMap);
-        const doctors = @json($doctors);
+        const menuItems = @json($menuItemsJson);
+        const customerMap = @json($customersJson);
         const currentMonth = {{ $selectedMonth }};
         const currentYear = {{ $selectedYear }};
-        const selectedDateState = {
-            date: null,
-            doctors: [],
-        };
-
         const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
         const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        const cutiModal = document.getElementById('cutiModal');
-        const statusBarClass = {
-            'Pengajuan': 'label-warning',
-            'Tutup Hfis': 'label-danger',
-            'Buka Hfis': 'label-success',
-            'Selesai': 'label-primary',
+        const reservationModal = document.getElementById('reservationModal');
+        const editingOrder = @json($editingOrderJson);
+        let itemRowCounter = 0;
+        const statusClass = {
+            reserved: 'label-info',
+            confirmed: 'label-primary',
+            completed: 'label-success',
+            cancelled: 'label-danger',
         };
 
-        function escapeHtml(value) {
-            return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+        function formatRupiah(value) {
+            return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
         }
 
         function renderCalendar() {
@@ -456,209 +306,282 @@
             const today = new Date();
             let html = '';
 
-            dayNames.forEach((day) => {
-                html += `<div class="calendar-weekday">${day}</div>`;
-            });
-
-            for (let i = 0; i < startOffset; i += 1) {
-                html += '<div class="calendar-day empty"></div>';
-            }
+            dayNames.forEach((day) => html += `<div class="calendar-weekday">${day}</div>`);
+            for (let i = 0; i < startOffset; i += 1) html += '<div class="calendar-day empty"></div>';
 
             for (let day = 1; day <= daysInMonth; day += 1) {
                 const date = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const items = calendarData[date] || [];
-                const isToday = today.getFullYear() === currentYear
-                    && (today.getMonth() + 1) === currentMonth
-                    && today.getDate() === day;
+                const isToday = today.getFullYear() === currentYear && (today.getMonth() + 1) === currentMonth && today.getDate() === day;
 
-                html += `<div class="calendar-day ${isToday ? 'today' : ''}" onclick="openCutiModal('${date}')">`;
-                html += `<div class="calendar-day-number">${day}</div>`;
-
+                html += `<div class="calendar-day ${isToday ? 'today' : ''}" onclick="openReservationModal('${date}')">`;
+                html += `<div class="calendar-day-number">${day}${items.length ? `<span class="calendar-day-count">${items.length}</span>` : ''}</div>`;
                 if (items.length) {
-                    html += `<span class="calendar-day-count">${items.length}</span>`;
                     html += '<div class="calendar-status-list">';
                     items.forEach((item) => {
                         html += `
                             <div class="calendar-detail-item">
-                                <span class="calendar-detail-name" title="${escapeHtml(item.pegawai_nama)}">${escapeHtml(item.pegawai_nama)}</span>
-                                <span class="calendar-detail-status label ${statusBarClass[item.status] || 'label-default'}">${escapeHtml(item.status)}</span>
+                                <span class="calendar-detail-name">${item.customer_name}</span>
+                                <div class="calendar-detail-meta">
+                                    <span class="label ${statusClass[item.status] || 'label-default'}">${item.status}</span>
+                                    <span class="label label-default">${item.payment_status}</span>
+                                </div>
                             </div>
                         `;
                     });
-
                     html += '</div>';
                 }
-
                 html += '</div>';
             }
-
             calendarGrid.innerHTML = html;
         }
 
-        function renderDoctorPicker(keyword = '') {
-            const container = document.getElementById('doctorPicker');
-            const selectedIds = selectedDateState.doctors.map((doctor) => String(doctor.id));
-            const normalizedKeyword = keyword.trim().toLowerCase();
+        function buildItemOptions() {
+            return menuItems.map((item) => `<option value="${item.id}" data-price="${item.price}">${item.name} - ${formatRupiah(item.price)}</option>`).join('');
+        }
 
-            const filtered = doctors.filter((doctor) => {
-                const matchKeyword = `${doctor.pegawai_nama} ${doctor.jabatan}`.toLowerCase().includes(normalizedKeyword);
-                return matchKeyword;
-            });
+        function getMenuItem(menuId) {
+            return menuItems.find((item) => Number(item.id) === Number(menuId)) || null;
+        }
 
-            if (!filtered.length) {
-                container.innerHTML = '<div class="empty-state">Dokter tidak ditemukan.</div>';
-                return;
-            }
+        function syncSelectedCustomer() {
+            const customerId = document.getElementById('customerId').value;
+            const customer = customerMap[customerId] || null;
 
-            container.innerHTML = filtered.map((doctor) => {
-                const isSelected = selectedIds.includes(String(doctor.pegawai_id));
-                const doctorId = escapeHtml(doctor.pegawai_id);
-                const doctorName = escapeHtml(doctor.pegawai_nama);
-                const doctorPosition = escapeHtml(doctor.jabatan);
+            document.getElementById('customerName').value = customer?.name || '';
+            document.getElementById('customerPhone').value = customer?.phone || '';
+            document.getElementById('customerAddress').value = customer?.address || '';
+        }
 
-                return `
-                    <div class="doctor-option ${isSelected ? 'disabled' : ''}">
-                        <div class="doctor-option-header">
-                            <div>
-                                <div class="doctor-name">${doctorName}</div>
-                                <div class="doctor-position">${doctorPosition}</div>
-                            </div>
-                            <button
-                                type="button"
-                                class="btn btn-xs btn-primary"
-                                onclick="selectDoctor('${String(doctor.pegawai_id).replace(/'/g, "\\'")}', '${String(doctor.pegawai_nama).replace(/'/g, "\\'")}', '${String(doctor.jabatan).replace(/'/g, "\\'")}')"
-                                ${isSelected ? 'disabled' : ''}
-                            >
-                                Pilih
-                            </button>
-                        </div>
+        function addItemRow(defaultItemId = '') {
+            const wrap = document.getElementById('itemRows');
+            const rowIndex = itemRowCounter;
+            itemRowCounter += 1;
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.innerHTML = `
+                <div class="item-row-grid">
+                    <div class="form-group">
+                        <label>Menu</label>
+                        <select class="form-control menu-select js-select2" name="items[${rowIndex}][menu_item_id]" required>
+                            <option value="">Pilih menu catering</option>
+                            ${buildItemOptions()}
+                        </select>
                     </div>
-                `;
-            }).join('');
-        }
-
-        function renderSelectedDoctors() {
-            const container = document.getElementById('selectedDoctors');
-
-            if (!selectedDateState.doctors.length) {
-                container.innerHTML = '<div class="empty-state">Belum ada dokter dipilih pada tanggal ini.</div>';
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="selected-doctor-list">
-                    ${selectedDateState.doctors.map((doctor) => `
-                        <div class="selected-doctor-item">
-                            <div class="selected-doctor-header">
-                                <div>
-                                    <div class="doctor-name">${escapeHtml(doctor.nama)}</div>
-                                    <div class="doctor-position">${escapeHtml(doctor.jabatan)}</div>
-                                </div>
-                                <button type="button" class="btn btn-xs btn-danger" onclick="removeDoctor('${doctor.id}')">
-                                    <i class="fa fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="selected-doctor-actions">
-                                <select class="form-control" onchange="updateDoctorStatus('${doctor.id}', this.value)">
-                                    <option value="Pengajuan" ${doctor.status === 'Pengajuan' ? 'selected' : ''}>Pengajuan</option>
-                                    <option value="Tutup Hfis" ${doctor.status === 'Tutup Hfis' ? 'selected' : ''}>Tutup Hfis</option>
-                                    <option value="Buka Hfis" ${doctor.status === 'Buka Hfis' ? 'selected' : ''}>Buka Hfis</option>
-                                    <option value="Selesai" ${doctor.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
-                                </select>
-                            </div>
-                            <input type="hidden" name="dokter_dipilih[]" value="${escapeHtml(doctor.id)}_${escapeHtml(doctor.status)}">
-                            <input type="hidden" name="pegawai_nama_${escapeHtml(doctor.id)}" value="${escapeHtml(doctor.nama)}">
-                            <input type="hidden" name="jabatan_${escapeHtml(doctor.id)}" value="${escapeHtml(doctor.jabatan)}">
-                        </div>
-                    `).join('')}
+                    <div class="form-group">
+                        <label>Qty</label>
+                        <input type="number" class="form-control qty-input" name="items[${rowIndex}][qty]" min="1" step="1" value="1" required>
+                    </div>
+                    <button type="button" class="btn btn-danger remove-item"><i class="fa fa-trash"></i></button>
                 </div>
+                <div class="text-muted small item-meta">Harga jual: Rp 0</div>
             `;
+            wrap.appendChild(row);
+            if (window.jQuery && window.jQuery.fn.select2) {
+                window.jQuery(row.querySelector('.js-select2')).select2({ width: '100%' });
+            }
+            if (defaultItemId) {
+                row.querySelector('.menu-select').value = defaultItemId;
+                if (window.jQuery && window.jQuery.fn.select2) {
+                    window.jQuery(row.querySelector('.menu-select')).val(defaultItemId).trigger('change');
+                }
+            }
+            syncItemMeta(row);
+            bindRowEvents(row);
+            recalcOrder();
         }
 
-        function selectDoctor(id, nama, jabatan) {
-            if (selectedDateState.doctors.some((doctor) => String(doctor.id) === String(id))) {
+        function bindRowEvents(row) {
+            const onMenuChange = () => {
+                syncItemMeta(row);
+                recalcOrder();
+            };
+            row.querySelector('.menu-select').addEventListener('change', onMenuChange);
+            if (window.jQuery && window.jQuery.fn.select2) {
+                window.jQuery(row.querySelector('.menu-select')).on('change', onMenuChange);
+            }
+            row.querySelector('.qty-input').addEventListener('input', recalcOrder);
+            row.querySelector('.remove-item').addEventListener('click', () => {
+                row.remove();
+                recalcOrder();
+            });
+        }
+
+        function syncItemMeta(row) {
+            const select = row.querySelector('.menu-select');
+            const item = getMenuItem(select.value);
+            const price = Number(item?.price || 0);
+            row.querySelector('.item-meta').textContent = `Harga jual: ${formatRupiah(price)}`;
+        }
+
+        function recalcOrder() {
+            let subtotal = 0;
+            document.querySelectorAll('#itemRows .item-row').forEach((row) => {
+                const item = getMenuItem(row.querySelector('.menu-select').value);
+                const qty = Number(row.querySelector('.qty-input').value || 0);
+                subtotal += Number(item?.price || 0) * qty;
+            });
+
+            document.getElementById('subtotalPreview').textContent = formatRupiah(subtotal);
+            updatePaymentSummary(subtotal);
+        }
+
+        function updatePaymentSummary(subtotal) {
+            const discount = Number(document.querySelector('input[name="discount"]').value || 0);
+            const cashReceived = Number(document.getElementById('cashReceived').value || 0);
+            const paymentStatus = document.querySelector('select[name="payment_status"]').value;
+            const downPayment = Number(document.querySelector('input[name="down_payment"]').value || 0);
+            const grandTotal = Math.max(subtotal - discount, 0);
+            const payableNow = paymentStatus === 'paid' ? grandTotal : downPayment;
+            const change = Math.max(cashReceived - payableNow, 0);
+
+            document.getElementById('grandTotalPreview').textContent = formatRupiah(grandTotal);
+            document.getElementById('changePreview').textContent = formatRupiah(change);
+        }
+
+        function renderDailyOrders(date) {
+            const dailyOrders = calendarData[date] || [];
+            const container = document.getElementById('dailyOrders');
+
+            if (!dailyOrders.length) {
+                container.innerHTML = '<div class="empty-state">Belum ada reservasi pada tanggal ini.</div>';
                 return;
             }
 
-            selectedDateState.doctors.push({
-                id,
-                nama,
-                jabatan,
-                status: 'Pengajuan',
-            });
-
-            renderDoctorPicker(document.getElementById('modalDoctorSearch').value);
-            renderSelectedDoctors();
+            container.innerHTML = dailyOrders.map((order) => `
+                <div class="existing-order">
+                    <strong>${order.customer_name}</strong>
+                    <div class="small text-muted">${order.order_number} | ${order.guest_count} tamu | ${formatRupiah(order.total)}</div>
+                    <div class="m-t-xs">
+                        <span class="label ${statusClass[order.status] || 'label-default'}">${order.status}</span>
+                        <span class="label label-default">${order.payment_status}</span>
+                    </div>
+                    <div class="m-t-xs">
+                        <a href="${new URL(window.location.href.split('?')[0]).pathname}?month=${currentMonth}&year=${currentYear}&edit=${order.id}" class="btn btn-xs btn-warning">Edit</a>
+                        <form method="POST" action="${document.getElementById('reservationForm').dataset.updateTemplate}/${order.id}/delete" style="display:inline-block" onsubmit="return confirm('Hapus reservasi ini?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-xs btn-danger">Hapus</button>
+                        </form>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function removeDoctor(id) {
-            selectedDateState.doctors = selectedDateState.doctors.filter((doctor) => String(doctor.id) !== String(id));
-            renderDoctorPicker(document.getElementById('modalDoctorSearch').value);
-            renderSelectedDoctors();
-        }
-
-        function updateDoctorStatus(id, status) {
-            selectedDateState.doctors = selectedDateState.doctors.map((doctor) => {
-                if (String(doctor.id) === String(id)) {
-                    return { ...doctor, status };
-                }
-
-                return doctor;
-            });
-
-            renderSelectedDoctors();
-        }
-
-        function openCutiModal(date) {
-            selectedDateState.date = date;
-            selectedDateState.doctors = (calendarData[date] || []).map((item) => ({
-                id: item.pegawai_id,
-                nama: item.pegawai_nama,
-                jabatan: item.jabatan,
-                status: item.status,
-            }));
-
+        function openReservationModal(date) {
             const [year, month, day] = date.split('-');
-            document.getElementById('tanggalStatus').value = date;
+            document.getElementById('eventDate').value = date;
             document.getElementById('modalDateLabel').innerText = `${day} ${monthNames[Number(month) - 1]} ${year}`;
-            document.getElementById('modalDoctorSearch').value = '';
-
-            renderDoctorPicker();
-            renderSelectedDoctors();
-            cutiModal.classList.add('active');
-            document.body.classList.add('modal-open');
+            document.getElementById('reservationForm').reset();
+            document.getElementById('reservationForm').action = document.getElementById('reservationForm').dataset.createAction;
+            document.getElementById('reservationSubmitLabel').textContent = 'Simpan Reservasi';
+            if (window.jQuery && window.jQuery.fn.select2) {
+                window.jQuery('#customerId').val('').trigger('change');
+            }
+            document.getElementById('itemRows').innerHTML = '';
+            itemRowCounter = 0;
+            addItemRow();
+            renderDailyOrders(date);
+            reservationModal.classList.add('active');
         }
 
-        function closeCutiModal() {
-            cutiModal.classList.remove('active');
-            document.body.classList.remove('modal-open');
+        function closeReservationModal() {
+            reservationModal.classList.remove('active');
         }
 
-        document.getElementById('doctorSearch').addEventListener('input', function filterDoctorTable() {
+        document.getElementById('customerSearch').addEventListener('input', function () {
             const keyword = this.value.trim().toLowerCase();
-            document.querySelectorAll('#doctorTable tbody tr').forEach((row) => {
+            document.querySelectorAll('#customerTable tbody tr').forEach((row) => {
                 row.style.display = row.innerText.toLowerCase().includes(keyword) ? '' : 'none';
             });
         });
 
-        document.getElementById('modalDoctorSearch').addEventListener('input', function filterModalDoctors() {
-            renderDoctorPicker(this.value);
+        document.getElementById('customerId').addEventListener('change', function () {
+            syncSelectedCustomer();
+        });
+        if (window.jQuery && window.jQuery.fn.select2) {
+            window.jQuery('#customerId').on('change', syncSelectedCustomer);
+        }
+
+        document.querySelector('input[name="discount"]').addEventListener('input', () => {
+            const subtotal = Array.from(document.querySelectorAll('#itemRows .item-row')).reduce((carry, row) => {
+                const item = getMenuItem(row.querySelector('.menu-select').value);
+                return carry + (Number(item?.price || 0) * Number(row.querySelector('.qty-input').value || 0));
+            }, 0);
+            updatePaymentSummary(subtotal);
         });
 
-        document.getElementById('closeCutiModal').addEventListener('click', closeCutiModal);
-        document.getElementById('cancelCutiModal').addEventListener('click', closeCutiModal);
-        cutiModal.addEventListener('click', function (event) {
-            if (event.target === cutiModal) {
-                closeCutiModal();
-            }
+        document.querySelector('input[name="down_payment"]').addEventListener('input', () => {
+            const subtotal = Array.from(document.querySelectorAll('#itemRows .item-row')).reduce((carry, row) => {
+                const item = getMenuItem(row.querySelector('.menu-select').value);
+                return carry + (Number(item?.price || 0) * Number(row.querySelector('.qty-input').value || 0));
+            }, 0);
+            updatePaymentSummary(subtotal);
         });
 
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape' && cutiModal.classList.contains('active')) {
-                closeCutiModal();
-            }
+        document.getElementById('cashReceived').addEventListener('input', () => {
+            const subtotal = Array.from(document.querySelectorAll('#itemRows .item-row')).reduce((carry, row) => {
+                const item = getMenuItem(row.querySelector('.menu-select').value);
+                return carry + (Number(item?.price || 0) * Number(row.querySelector('.qty-input').value || 0));
+            }, 0);
+            updatePaymentSummary(subtotal);
+        });
+
+        document.querySelector('select[name="payment_status"]').addEventListener('change', () => {
+            const subtotal = Array.from(document.querySelectorAll('#itemRows .item-row')).reduce((carry, row) => {
+                const item = getMenuItem(row.querySelector('.menu-select').value);
+                return carry + (Number(item?.price || 0) * Number(row.querySelector('.qty-input').value || 0));
+            }, 0);
+            updatePaymentSummary(subtotal);
+        });
+
+        document.getElementById('addItemRow').addEventListener('click', () => addItemRow());
+        document.getElementById('closeReservationModal').addEventListener('click', closeReservationModal);
+        document.getElementById('cancelReservationModal').addEventListener('click', closeReservationModal);
+        reservationModal.addEventListener('click', function (event) {
+            if (event.target === reservationModal) closeReservationModal();
+        });
+
+        document.getElementById('reservationForm').addEventListener('submit', () => {
+            setTimeout(() => {
+                document.getElementById('reservationForm').reset();
+                if (window.jQuery && window.jQuery.fn.select2) {
+                    window.jQuery('#customerId').val('').trigger('change');
+                }
+                document.getElementById('itemRows').innerHTML = '';
+                closeReservationModal();
+                window.location = '{{ route('catering.calendar', ['month' => $selectedMonth, 'year' => $selectedYear]) }}';
+            }, 200);
         });
 
         renderCalendar();
+
+        if (editingOrder) {
+            openReservationModal(editingOrder.event_date);
+            document.getElementById('reservationForm').action = `${document.getElementById('reservationForm').dataset.updateTemplate}/${editingOrder.id}/update`;
+            document.getElementById('reservationSubmitLabel').textContent = 'Update Reservasi';
+            document.getElementById('customerId').value = editingOrder.customer_id || '';
+            if (window.jQuery && window.jQuery.fn.select2) {
+                window.jQuery('#customerId').val(editingOrder.customer_id || '').trigger('change');
+            } else {
+                document.getElementById('customerId').dispatchEvent(new Event('change'));
+            }
+            document.getElementById('customerName').value = editingOrder.customer_name || '';
+            document.getElementById('customerPhone').value = editingOrder.customer_phone || '';
+            document.getElementById('customerAddress').value = editingOrder.customer_address || '';
+            document.querySelector('input[name="guest_count"]').value = editingOrder.guest_count || 0;
+            document.querySelector('select[name="status"]').value = editingOrder.status;
+            document.querySelector('select[name="payment_status"]').value = editingOrder.payment_status;
+            document.querySelector('input[name="down_payment"]').value = editingOrder.down_payment || 0;
+            document.querySelector('input[name="discount"]').value = editingOrder.discount || 0;
+            document.getElementById('cashReceived').value = editingOrder.cash_received || 0;
+            document.querySelector('textarea[name="notes"]').value = editingOrder.notes || '';
+            document.getElementById('itemRows').innerHTML = '';
+            itemRowCounter = 0;
+            (editingOrder.items || []).forEach((item) => addItemRow(item.menu_item_id));
+            document.querySelectorAll('#itemRows .qty-input').forEach((input, index) => {
+                input.value = editingOrder.items[index].qty;
+            });
+            recalcOrder();
+        }
     </script>
 @endsection

@@ -1,25 +1,41 @@
 <?php
 
 namespace App\Models;
-namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    protected $table = 'user';
+    use HasRoles;
+    use SoftDeletes;
+
+    protected $table = 'users';
+
+    protected $guard_name = 'web';
 
     protected $fillable =
     [
         'username',
-        'password',
         'name',
+        'email',
+        'phone',
+        'password',
         'level',
-        'foto'
+        'foto',
+        'is_active',
+        'last_login_at',
     ];
 
     protected $hidden =
     [
-        'password'
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'last_login_at' => 'datetime',
     ];
 }

@@ -1,8 +1,8 @@
 <div class="footer">
     <div class="pull-right">
-        Example text
+        Smart Cathering & Resto Management System
     </div>
     <div>
-        <strong>Copyright</strong> RS PKU Muhammadiyah Boja &copy; 2026
+        <strong>Copyright</strong> Partner in Code Project &copy; 2026
     </div>
 </div>

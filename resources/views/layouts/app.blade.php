@@ -3,11 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PKUBOJA - @yield('title') </title>
+    <title>Resto Catering - @yield('title')</title>
 
 
     <link rel="stylesheet" href="{!! asset('css/vendor.css') !!}" />
     <link rel="stylesheet" href="{!! asset('css/app.css') !!}" />
+    <link rel="stylesheet" href="{{ asset('css/plugins/select2/select2.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/plugins/dataTables/datatables.min.css') }}" />
 
 </head>
 <body>
@@ -38,6 +40,8 @@
 
 <script src="{!! asset('js/app.js') !!}" type="text/javascript"></script>
 <script src="{{ asset('js/plugins/metisMenu/jquery.metisMenu.js') }}"></script>
+<script src="{{ asset('js/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ asset('js/plugins/dataTables/datatables.min.js') }}"></script>
 <script>
     (function () {
         if (!window.jQuery) {
@@ -117,6 +121,43 @@
                         arrow.css('transform', 'rotate(90deg)');
                     }
                 }
+            });
+
+            $('.js-select2').each(function () {
+                const $element = $(this);
+
+                if ($element.hasClass('select2-hidden-accessible')) {
+                    return;
+                }
+
+                $element.select2({
+                    width: '100%',
+                    dropdownAutoWidth: true,
+                });
+            });
+
+            $('.js-datatable').each(function () {
+                const $table = $(this);
+
+                if ($.fn.DataTable.isDataTable(this)) {
+                    return;
+                }
+
+                $table.DataTable({
+                    pageLength: 10,
+                    order: [],
+                    language: {
+                        search: 'Cari:',
+                        lengthMenu: 'Tampilkan _MENU_ data',
+                        info: 'Menampilkan _START_ - _END_ dari _TOTAL_ data',
+                        paginate: {
+                            previous: 'Prev',
+                            next: 'Next',
+                        },
+                        zeroRecords: 'Data tidak ditemukan',
+                        infoEmpty: 'Belum ada data',
+                    },
+                });
             });
         });
     }());

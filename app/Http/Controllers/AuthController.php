@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RestaurantProfile;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
@@ -20,32 +23,46 @@ class AuthController extends Controller
 
     public function login()
     {
-        // jika sudah login redirect ke dashboard
         if (Session::get('login')) {
             return redirect()->route('main');
         }
 
-        $setting = DB::table('setting')->first();
+        $setting = RestaurantProfile::query()->first();
+
+        if (! $setting && Schema::hasTable('setting')) {
+            $legacySetting = DB::table('setting')->first();
+
+            if ($legacySetting) {
+                $setting = (object) [
+                    'name' => $legacySetting->nama_perusahaan ?? 'Resto Catering',
+                    'address' => $legacySetting->alamat ?? null,
+                    'phone' => $legacySetting->telepon ?? null,
+                    'logo_path' => $legacySetting->path_logo ?? null,
+                ];
+            }
+        }
+
         $selectedMonth = max(1, min(12, (int) request()->integer('month', now()->month)));
         $selectedYear = max(2024, min(2100, (int) request()->integer('year', now()->year)));
         $calendarMap = [];
 
-        if (Schema::hasTable('cuti')) {
-            $calendarMap = DB::table('cuti')
-                ->select(['tanggal', 'pegawai_id', 'pegawai_nama', 'jabatan', 'status'])
-                ->whereMonth('tanggal', $selectedMonth)
-                ->whereYear('tanggal', $selectedYear)
-                ->orderBy('tanggal')
-                ->orderBy('pegawai_nama')
+        if (Schema::hasTable('catering_orders')) {
+            $calendarMap = DB::table('catering_orders')
+                ->select(['event_date', 'order_number', 'customer_name', 'guest_count', 'status', 'payment_status'])
+                ->whereMonth('event_date', $selectedMonth)
+                ->whereYear('event_date', $selectedYear)
+                ->orderBy('event_date')
+                ->orderBy('customer_name')
                 ->get()
-                ->groupBy('tanggal')
+                ->groupBy('event_date')
                 ->map(function ($items) {
                     return $items->map(function ($item) {
                         return [
-                            'pegawai_id' => (string) $item->pegawai_id,
-                            'pegawai_nama' => (string) $item->pegawai_nama,
-                            'jabatan' => (string) ($item->jabatan ?? ''),
+                            'order_number' => (string) $item->order_number,
+                            'customer_name' => (string) $item->customer_name,
+                            'guest_count' => (int) ($item->guest_count ?? 0),
                             'status' => (string) $item->status,
+                            'payment_status' => (string) $item->payment_status,
                         ];
                     })->values();
                 })
@@ -83,68 +100,44 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-
-        // cari user
-        $user = DB::table('user')
-
+        $user = User::query()
             ->where('username', $request->username)
-            ->whereNull('deleted_at')
+            ->where('is_active', true)
+            ->when(
+                Schema::hasColumn('users', 'deleted_at'),
+                fn ($query) => $query->whereNull('deleted_at')
+            )
             ->first();
 
-
-        // cek username
-        if (!$user)
-        {
+        if (! $user) {
             return back()
                 ->withInput()
                 ->with('error', 'Username tidak ditemukan');
         }
 
-
-        // cek password
-        if (!Hash::check($request->password, $user->password))
-        {
+        if (! Hash::check($request->password, $user->password)) {
             return back()
                 ->withInput()
                 ->with('error', 'Password salah');
         }
 
+        Auth::login($user);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Simpan Session Login
-        |--------------------------------------------------------------------------
-        */
+        $user->forceFill([
+            'last_login_at' => now(),
+        ])->save();
 
         Session::put([
-
             'login' => true,
-
             'user_id' => $user->id,
-
             'username' => $user->username,
-
             'name' => $user->name,
-
             'level' => $user->level,
-
             'foto' => $user->foto,
-
             'email' => $user->email,
-
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Regenerate Session (security)
-        |--------------------------------------------------------------------------
-        */
-
         $request->session()->regenerate();
-
-
 
         return redirect()
                 ->route('main')
@@ -163,6 +156,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        Auth::logout();
 
         Session::flush();
 

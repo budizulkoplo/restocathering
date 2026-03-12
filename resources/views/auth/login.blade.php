@@ -3,7 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $setting->nama_perusahaan }} | Login</title>
+    @php
+        $appName = $setting->name ?? $setting->nama_perusahaan ?? 'Resto Catering';
+        $appAddress = $setting->address ?? $setting->alamat ?? '-';
+        $appLogo = $setting->logo_path ?? $setting->path_logo ?? null;
+    @endphp
+    <title>{{ $appName }} | Login</title>
 
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -553,9 +558,9 @@
             <div class="screen-header">
                 <div class="screen-title">
                     <span class="screen-kicker">
-                        <i class="fa fa-calendar-check-o"></i> Informasi Publik
+                        <i class="fa fa-calendar-check-o"></i> Informasi Reservasi
                     </span>
-                    <h1>Kalender Cuti Dokter</h1>
+                    <h1>Kalender Reservasi Catering</h1>
                 </div>
 
                 <div class="screen-actions">
@@ -572,10 +577,10 @@
 
             <div class="calendar-toolbar">
                 <div class="calendar-legend">
-                    <span><i class="fa fa-square text-warning"></i> Pengajuan</span>
-                    <span><i class="fa fa-square text-danger"></i> Tutup Hfis</span>
-                    <span><i class="fa fa-square text-success"></i> Buka Hfis</span>
-                    <span><i class="fa fa-square text-primary"></i> Selesai</span>
+                    <span><i class="fa fa-square text-info"></i> Reserved</span>
+                    <span><i class="fa fa-square text-primary"></i> Confirmed</span>
+                    <span><i class="fa fa-square text-success"></i> Completed</span>
+                    <span><i class="fa fa-square text-danger"></i> Cancelled</span>
                 </div>
                 <div class="calendar-summary">
                     Periode aktif: <strong>{{ $monthName }}</strong>
@@ -587,7 +592,7 @@
     </div>
 
     <div class="floating-note">
-        &copy; {{ date('Y') }} {{ $setting->nama_perusahaan }}
+        &copy; {{ date('Y') }} {{ $appName }}
     </div>
 
     <div class="login-modal" id="loginModal">
@@ -595,15 +600,15 @@
             <div class="login-card-header">
                 <div class="login-brand">
                     <div class="login-brand-logo">
-                        @if($setting->path_logo)
-                            <img src="{{ asset($setting->path_logo) }}" alt="Logo">
+                        @if($appLogo)
+                            <img src="{{ asset($appLogo) }}" alt="Logo">
                         @else
-                            <h1 class="logo-name">IN+</h1>
+                            <h1 class="logo-name">RC</h1>
                         @endif
                     </div>
                     <div class="login-brand-copy">
-                        <h3>{{ $setting->nama_perusahaan }}</h3>
-                        <p>{{ $setting->alamat }}</p>
+                        <h3>{{ $appName }}</h3>
+                        <p>{{ $appAddress }}</p>
                     </div>
                 </div>
                 <button type="button" class="login-card-close" id="closeLoginModal">&times;</button>
@@ -613,8 +618,8 @@
                 <span class="login-badge">
                     <i class="fa fa-lock"></i> Akses Admin
                 </span>
-                <h4>Masuk ke Sistem Cuti Dokter</h4>
-                <p>Gunakan akun Anda untuk memperbarui status cuti dan mengelola jadwal dokter.</p>
+                <h4>Masuk ke Sistem Resto Catering</h4>
+                <p>Gunakan akun Anda untuk mengelola reservasi catering, menu, bahan baku, meja, dan operasional resto.</p>
 
                 @if(session('error'))
                     <div class="alert alert-danger">
@@ -646,7 +651,7 @@
                 </form>
 
                 <div class="login-note">
-                    Login diperlukan hanya untuk mengubah status, menambah jadwal, dan mengelola data cuti dokter.
+                    Login diperlukan untuk input reservasi, kasir resto, pembelian bahan baku, stok opname, dan pengaturan sistem.
                 </div>
             </div>
         </div>
@@ -662,10 +667,10 @@
         const publicDayNames = @json($dayNames);
         const loginModal = document.getElementById('loginModal');
         const statusClassMap = {
-            'Pengajuan': 'status-warning',
-            'Tutup Hfis': 'status-danger',
-            'Buka Hfis': 'status-success',
-            'Selesai': 'status-primary',
+            reserved: 'status-warning',
+            confirmed: 'status-primary',
+            completed: 'status-success',
+            cancelled: 'status-danger',
         };
 
         function escapeHtml(value) {
@@ -709,14 +714,14 @@
                     items.forEach((item) => {
                         html += `
                             <div class="public-calendar-item">
-                                <span class="public-calendar-name" title="${escapeHtml(item.pegawai_nama)}">${escapeHtml(item.pegawai_nama)}</span>
+                                <span class="public-calendar-name" title="${escapeHtml(item.customer_name)}">${escapeHtml(item.customer_name)}</span>
                                 <span class="public-calendar-status ${statusClassMap[item.status] || 'status-default'}">${escapeHtml(item.status)}</span>
                             </div>
                         `;
                     });
                     html += '</div>';
                 } else {
-                    html += '<div class="public-empty-text">Tidak ada cuti</div>';
+                    html += '<div class="public-empty-text">Belum ada reservasi</div>';
                 }
 
                 html += '</div>';
