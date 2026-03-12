@@ -493,7 +493,7 @@
             margin-top: 16px;
             font-size: 12px;
             color: #667085;
-            text-align: left;
+            text-align: center;
             background: #f8fafc;
             border-radius: 12px;
             padding: 12px 14px;
@@ -619,7 +619,7 @@
                     <i class="fa fa-lock"></i> Akses Admin
                 </span>
                 <h4>Masuk ke Sistem Resto Catering</h4>
-                <p>Gunakan akun Anda untuk mengelola reservasi catering, menu, bahan baku, meja, dan operasional resto.</p>
+                <p>Gunakan akun Anda untuk pengelolaan operasional resto.</p>
 
                 @if(session('error'))
                     <div class="alert alert-danger">
@@ -651,7 +651,7 @@
                 </form>
 
                 <div class="login-note">
-                    Login diperlukan untuk input reservasi, kasir resto, pembelian bahan baku, stok opname, dan pengaturan sistem.
+                    Copyright Partner in Code Project © 2026
                 </div>
             </div>
         </div>
